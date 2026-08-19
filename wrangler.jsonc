@@ -10,5 +10,11 @@
     "MELHOR_ENVIO_USER_AGENT": "FPassos Suplementos (felipefpassos@hotmail.com)",
     "SHIPPING_HANDLING_FEE": "0",
     "SHIPPING_EXTRA_DAYS": "0"
-  }
+  },
+  "kv_namespaces": [
+    {
+      "binding": "FPASSOS_STORE",
+      "id": "d1b6e2832f654ddaad6e9ad1dd48057d"
+    }
+  ]
 }
