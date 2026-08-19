@@ -8,6 +8,7 @@
     "ORIGIN_ZIP": "04236290",
     "FRONTEND_ORIGINS": "https://fpassos-suplementos.lincolnmelo2010.workers.dev",
     "MELHOR_ENVIO_USER_AGENT": "FPassos Suplementos (felipefpassos@hotmail.com)",
+    "MELHOR_ENVIO_BASE_URL": "https://sandbox.melhorenvio.com.br",
     "SHIPPING_HANDLING_FEE": "0",
     "SHIPPING_EXTRA_DAYS": "0"
   },
