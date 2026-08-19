@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "fpassos-api",
+  "name": "loja-fpassos",
   "main": "src/index.js",
   "compatibility_date": "2026-08-19",
   "workers_dev": true,
