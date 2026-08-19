@@ -4,6 +4,11 @@
   "main": "src/index.js",
   "compatibility_date": "2026-08-19",
   "workers_dev": true,
+  "secrets": {
+    "required": [
+      "MERCADO_PAGO_ACCESS_TOKEN"
+    ]
+  },
   "vars": {
     "ORIGIN_ZIP": "04236290",
     "FRONTEND_ORIGINS": "https://fpassos-suplementos.lincolnmelo2010.workers.dev",
