@@ -14,8 +14,8 @@
     "ORIGIN_ZIP": "04236290",
     "FRONTEND_ORIGINS": "https://fpassossuplementos.com.br,https://www.fpassossuplementos.com.br,https://fpassos-suplementos.loja-fpassossuplementos.workers.dev,https://fpassos-suplementos.lincolnmelo2010.workers.dev",
     "MELHOR_ENVIO_USER_AGENT": "FPassos Suplementos (felipefpassos@hotmail.com)",
-    "MELHOR_ENVIO_BASE_URL": "https://sandbox.melhorenvio.com.br",
-    "MELHOR_ENVIO_CLIENT_ID": "11242",
+    "MELHOR_ENVIO_BASE_URL": "https://www.melhorenvio.com.br",
+    "MELHOR_ENVIO_CLIENT_ID": "28660",
     "SHIPPING_HANDLING_FEE": "0",
     "SHIPPING_EXTRA_DAYS": "0"
   },
