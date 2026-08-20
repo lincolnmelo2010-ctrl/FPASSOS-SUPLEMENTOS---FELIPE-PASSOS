@@ -2,70 +2,85 @@
 
 Backend Cloudflare Worker separado do site estático da FPassos.
 
+## Endereços planejados de produção
+
+- Loja: `https://fpassossuplementos.com.br`
+- Loja (www): `https://www.fpassossuplementos.com.br`
+- API: `https://api.fpassossuplementos.com.br`
+
+Enquanto o domínio próprio não estiver ativo, o Worker continua disponível pelo endereço `workers.dev` da conta.
+
 ## O que este Worker faz
 
 - Recalcula o carrinho no servidor com a tabela oficial de preços.
 - Envia peso, dimensões, valor e quantidade de cada produto ao Melhor Envio.
-- Usa `custom_price` e `custom_delivery_time` quando disponíveis.
 - Mantém a cotação por 30 minutos em KV.
-- Processa pagamento do Mercado Pago via `/v1/payments` com `X-Idempotency-Key`.
-- Recebe Webhooks do Mercado Pago e valida assinatura quando o secret estiver configurado.
+- Processa pagamentos do Mercado Pago via `/v1/payments` com `X-Idempotency-Key`.
+- Recebe Webhooks do Mercado Pago e valida assinatura quando `MERCADO_PAGO_WEBHOOK_SECRET` estiver configurado.
 - Faz OAuth2 do Melhor Envio e renova o access token.
 
-## Binding obrigatório
+## Worker e KV
 
-Criar um namespace Workers KV e vinculá-lo ao Worker com o nome:
+Worker: `loja-fpassos-suplementos`
+
+Binding KV obrigatório:
 
 `FPASSOS_STORE`
 
-## Secrets obrigatórios
+## Secrets / variáveis privadas
 
-Adicionar em **Settings > Variables and Secrets** do `fpassos-api`:
+Cadastrar em **Settings > Variables and Secrets** do Worker:
 
-- `MERCADO_PAGO_ACCESS_TOKEN`
-- `MELHOR_ENVIO_CLIENT_ID`
-- `MELHOR_ENVIO_CLIENT_SECRET`
+- `MERCADO_PAGO_ACCESS_TOKEN` — Secret
+- `MELHOR_ENVIO_CLIENT_SECRET` — Secret
+- `MERCADO_PAGO_WEBHOOK_SECRET` — Secret recomendado quando o Webhook for ativado
 
-Recomendado:
+O `MELHOR_ENVIO_CLIENT_ID` é uma variável comum (não secreta).
 
-- `MERCADO_PAGO_WEBHOOK_SECRET`
+Nunca salve tokens, senhas ou Client Secrets no GitHub.
 
-Nunca salve esses valores no GitHub.
+## Variáveis de execução
 
-## Variáveis não secretas
-
-Já previstas no `wrangler.jsonc`:
+O `wrangler.jsonc` contém:
 
 - `ORIGIN_ZIP=04236290`
-- `FRONTEND_ORIGINS=https://fpassos-suplementos.lincolnmelo2010.workers.dev`
-- `MELHOR_ENVIO_USER_AGENT=FPassos Suplementos (felipefpassos@hotmail.com)`
+- `FRONTEND_ORIGINS` com o domínio final e endereços temporários da transição
+- `MELHOR_ENVIO_USER_AGENT`
+- `MELHOR_ENVIO_BASE_URL=https://sandbox.melhorenvio.com.br` enquanto os testes estiverem no Sandbox
+- `MELHOR_ENVIO_CLIENT_ID=11242` para o aplicativo atual do Sandbox
 - `SHIPPING_HANDLING_FEE=0`
 - `SHIPPING_EXTRA_DAYS=0`
 
 ## Melhor Envio
 
-Callback a cadastrar no aplicativo do Melhor Envio:
+No domínio final, o callback de produção será:
 
-`https://fpassos-api.lincolnmelo2010.workers.dev/api/melhor-envio/callback`
+`https://api.fpassossuplementos.com.br/api/melhor-envio/callback`
 
-Após inserir Client ID/Secret e criar o KV, abrir no navegador:
+Conexão OAuth:
 
-`https://fpassos-api.lincolnmelo2010.workers.dev/api/melhor-envio/connect`
+`https://api.fpassossuplementos.com.br/api/melhor-envio/connect`
 
-O escopo solicitado é somente `shipping-calculate`.
+Status:
+
+`https://api.fpassossuplementos.com.br/api/melhor-envio/status`
+
+O escopo solicitado pelo backend é `shipping-calculate`.
+
+Antes de produção, trocar o aplicativo/credenciais do Sandbox pelas credenciais de produção e remover o `MELHOR_ENVIO_BASE_URL` de Sandbox.
 
 ## Mercado Pago
 
-Webhook:
+Webhook final:
 
-`https://fpassos-api.lincolnmelo2010.workers.dev/api/mercadopago/webhook`
+`https://api.fpassossuplementos.com.br/api/mercadopago/webhook`
 
 A Public Key permanece no frontend. O Access Token fica apenas como Secret no Worker.
 
 ## Teste rápido
 
-Abrir:
+Após ativar `api.fpassossuplementos.com.br`, abrir:
 
-`https://fpassos-api.lincolnmelo2010.workers.dev/api/health`
+`https://api.fpassossuplementos.com.br/api/health`
 
-O retorno deve indicar `ok: true`. Antes das credenciais, os campos de Mercado Pago/Melhor Envio aparecerão como `false`.
+O retorno esperado deve indicar `ok: true`, `store: true` e `mercado_pago: true`. O campo `melhor_envio` só fica `true` após concluir o OAuth.
