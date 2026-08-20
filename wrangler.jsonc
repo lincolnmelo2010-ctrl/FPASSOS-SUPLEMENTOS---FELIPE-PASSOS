@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "loja-fpassos-suplementos",
-  "main": "src/index_v3.js",
+  "main": "src/sync_frontend_v6.js",
   "compatibility_date": "2026-08-19",
   "workers_dev": true,
   "secrets": {
@@ -23,6 +23,10 @@
     {
       "binding": "FPASSOS_STORE",
       "id": "d1b6e2832f654ddaad6e9ad1dd48057d"
+    },
+    {
+      "binding": "FPASSOS_FRONTEND_CODE",
+      "id": "17798f8b21ad4b6dbbf2776dfefc8cd9"
     }
   ]
 }
