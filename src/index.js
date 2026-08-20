@@ -1,42 +1,42 @@
-// FPassos Suplementos — API Worker v2
+// FPassos Suplementos — API Worker v3
 // Backend separado para: Melhor Envio (cotação por produtos + OAuth2) e Mercado Pago Payment Brick.
 // Nenhuma credencial secreta deve ser colocada neste arquivo ou no GitHub.
 
 const PRODUCTS = {
   1: { name: "Thermo Abdomen 120 cápsulas", price: 44.9, weight: 0.25, height: 16, width: 9, length: 9 },
-  2: { name: "Whey Test-Boost 900g Baunilha", price: 149.99, weight: 1.08, height: 31, width: 22, length: 10 },
+  2: { name: "Whey Test-Boost 900g Baunilha", price: 119.9, weight: 1.08, height: 31, width: 22, length: 10 },
   3: { name: "Whey Test-Boost 900g Chocolate", price: 119.9, weight: 1.08, height: 31, width: 22, length: 10 },
   4: { name: "Pure Protein Concentrated / Isolated 1,8kg - Baunilha", price: 169.9, weight: 2.05, height: 38, width: 27, length: 13 },
   42: { name: "Pure Protein Concentrated / Isolated 1,8kg - Cookies", price: 169.9, weight: 2.05, height: 38, width: 27, length: 13 },
   43: { name: "Pure Protein Concentrated / Isolated 1,8kg - Chocolate", price: 169.9, weight: 2.05, height: 38, width: 27, length: 13 },
-  5: { name: "Refil 100% Whey 900g Cookies & Cream", price: 132, weight: 1.08, height: 31, width: 22, length: 10 },
+  5: { name: "Refil 100% Whey 900g Cookies & Cream", price: 129.9, weight: 1.08, height: 31, width: 22, length: 10 },
   6: { name: "100% Whey Crush 900g Doce de Leite", price: 142.99, weight: 1.12, height: 27, width: 18, length: 18 },
   8: { name: "100% Whey Crush 900g Chocolate", price: 142.99, weight: 1.12, height: 27, width: 18, length: 18 },
-  9: { name: "Whey 100% HD 900g Morango", price: 132, weight: 1.08, height: 31, width: 22, length: 10 },
-  10: { name: "Whey 100% HD 900g Chocolate", price: 132, weight: 1.08, height: 31, width: 22, length: 10 },
-  11: { name: "Refil 100% Whey 900g Baunilha", price: 132, weight: 1.08, height: 31, width: 22, length: 10 },
-  12: { name: "Best Whey Toddy 900g", price: 330, weight: 1.12, height: 27, width: 18, length: 18 },
-  13: { name: "Best Whey 900g Original", price: 330, weight: 1.12, height: 27, width: 18, length: 18 },
+  9: { name: "Whey 100% HD 900g Morango", price: 129.9, weight: 1.08, height: 31, width: 22, length: 10 },
+  10: { name: "Whey 100% HD 900g Chocolate", price: 129.9, weight: 1.08, height: 31, width: 22, length: 10 },
+  11: { name: "Refil 100% Whey 900g Baunilha", price: 129.9, weight: 1.08, height: 31, width: 22, length: 10 },
+  12: { name: "Best Whey Toddy 900g", price: 330, unavailable: true, weight: 1.12, height: 27, width: 18, length: 18 },
+  13: { name: "Best Whey 900g Original", price: 330, unavailable: true, weight: 1.12, height: 27, width: 18, length: 18 },
   14: { name: "Best Whey 900g Churros", price: 219.99, weight: 1.12, height: 27, width: 18, length: 18 },
   15: { name: "Best Whey 900g Abacaxi Frapê", price: 219.99, weight: 1.12, height: 27, width: 18, length: 18 },
   16: { name: "Chef Whey 907g Morango com Chantilly", price: 197.99, weight: 1.12, height: 28, width: 18, length: 18 },
   17: { name: "Chef Whey 907g Mousse de Coco", price: 197.99, weight: 1.12, height: 28, width: 18, length: 18 },
   18: { name: "Creatine Max Titanium 300g", price: 64.5, weight: 0.43, height: 14, width: 12, length: 12 },
-  19: { name: "Creatine Pure Dark Lab 300g", price: 88, weight: 0.43, height: 14, width: 12, length: 12 },
+  19: { name: "Creatine Pure Dark Lab 300g", price: 49.9, weight: 0.43, height: 14, width: 12, length: 12 },
   20: { name: "Creatine Black Skull 150g", price: 47.85, weight: 0.25, height: 12, width: 10, length: 10 },
   21: { name: "Creatine Turbo Black Skull 300g", price: 54.99, weight: 0.43, height: 14, width: 12, length: 12 },
-  22: { name: "Creatina Max Titanium 7Belo 300g", price: 60, weight: 0.43, height: 14, width: 12, length: 12 },
+  22: { name: "Creatina Max Titanium 7Belo 300g", price: 59.9, weight: 0.43, height: 14, width: 12, length: 12 },
   23: { name: "Optimum Micronized Creatine 300g", price: 164.99, weight: 0.43, height: 14, width: 12, length: 12 },
   24: { name: "Darkness Creapure 200g", price: 139.99, weight: 0.33, height: 13, width: 11, length: 11 },
-  25: { name: "Profit Creatine 300g", price: 60.8, weight: 0.43, height: 14, width: 12, length: 12 },
-  26: { name: "Dynamo Pure Creatine 300g", price: 65, weight: 0.43, height: 14, width: 12, length: 12 },
+  25: { name: "Profit Creatine 300g", price: 59.9, weight: 0.43, height: 14, width: 12, length: 12 },
+  26: { name: "Dynamo Pure Creatine 300g", price: 64.9, weight: 0.43, height: 14, width: 12, length: 12 },
   27: { name: "Integralmédica Glutamine 300g", price: 59.8, weight: 0.43, height: 14, width: 12, length: 12 },
-  28: { name: "Max Titanium L-Glutamina 300g", price: 77, weight: 0.43, height: 14, width: 12, length: 12 },
-  29: { name: "DUX Glutamina 300g", price: 73, weight: 0.43, height: 14, width: 12, length: 12 },
-  30: { name: "Muscle Labs Glutamina 150g", price: 32.9, weight: 0.25, height: 12, width: 10, length: 10 },
+  28: { name: "Max Titanium L-Glutamina 300g", price: 79.9, weight: 0.43, height: 14, width: 12, length: 12 },
+  29: { name: "DUX Glutamina 300g", price: 69.9, weight: 0.43, height: 14, width: 12, length: 12 },
+  30: { name: "Muscle Labs Glutamina 150g", price: 29.9, weight: 0.25, height: 12, width: 10, length: 10 },
   31: { name: "Lauton Colágeno 60 cápsulas", price: 49.4, weight: 0.18, height: 15, width: 8, length: 8 },
-  32: { name: "Max Titanium Colágeno 240g", price: 77, weight: 0.36, height: 14, width: 11, length: 11 },
-  33: { name: "Fisionutri Colágeno 60 tabletes", price: 28, weight: 0.18, height: 15, width: 8, length: 8 },
+  32: { name: "Max Titanium Colágeno 240g", price: 79.9, weight: 0.36, height: 14, width: 11, length: 11 },
+  33: { name: "Fisionutri Colágeno 60 tabletes", price: 27.9, weight: 0.18, height: 15, width: 8, length: 8 },
   34: { name: "Nutrata Ômega 3 60 cápsulas", price: 36.99, weight: 0.18, height: 15, width: 8, length: 8 },
   35: { name: "ApisNutri Ômega 3 120 cápsulas", price: 89.5, weight: 0.24, height: 16, width: 9, length: 9 },
   36: { name: "ApisNutri Colágeno II 60 comprimidos", price: 31.9, weight: 0.18, height: 15, width: 8, length: 8 }
@@ -89,6 +89,7 @@ function validateCart(raw) {
     const id = Number(item.id);
     const product = PRODUCTS[id];
     if (!product) throw new Error(`Produto ${id} inválido.`);
+    if (product.unavailable) throw new Error(`Produto ${id} indisponível.`);
     const quantity = Number.parseInt(item.quantity, 10);
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
       throw new Error(`Quantidade inválida para o produto ${id}.`);
@@ -288,7 +289,7 @@ async function mpWebhook(request, env) {
 async function health(env) {
   let melhorEnvio = false;
   try { melhorEnvio = Boolean((await readTokens(env))?.access_token || env.MELHOR_ENVIO_ACCESS_TOKEN); } catch {}
-  return json({ ok: true, version: '2026-08-19-api-v2', store: Boolean(env.FPASSOS_STORE), mercado_pago: Boolean(env.MERCADO_PAGO_ACCESS_TOKEN), melhor_envio: melhorEnvio, origin_zip: digits(env.ORIGIN_ZIP || '04236290') });
+  return json({ ok: true, version: '2026-08-20-api-v3', store: Boolean(env.FPASSOS_STORE), mercado_pago: Boolean(env.MERCADO_PAGO_ACCESS_TOKEN), melhor_envio: melhorEnvio, origin_zip: digits(env.ORIGIN_ZIP || '04236290') });
 }
 
 async function dispatch(request, env) {
