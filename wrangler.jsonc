@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "loja-fpassos-suplementos",
-  "main": "src/sync_frontend_footer_cart_v2.js",
+  "main": "src/sync_frontend_footer_cart_v3.js",
   "compatibility_date": "2026-08-19",
   "workers_dev": true,
   "secrets": {
