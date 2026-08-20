@@ -3,9 +3,9 @@
 // Nenhuma credencial secreta deve ser colocada neste arquivo ou no GitHub.
 
 const PRODUCTS = {
-  1: { name: "Thermo Abdomen 120 cápsulas", price: 38.5, weight: 0.25, height: 16, width: 9, length: 9 },
+  1: { name: "Thermo Abdomen 120 cápsulas", price: 44.9, weight: 0.25, height: 16, width: 9, length: 9 },
   2: { name: "Whey Test-Boost 900g Baunilha", price: 149.99, weight: 1.08, height: 31, width: 22, length: 10 },
-  3: { name: "Whey Test-Boost 900g Chocolate", price: 100.8, weight: 1.08, height: 31, width: 22, length: 10 },
+  3: { name: "Whey Test-Boost 900g Chocolate", price: 119.9, weight: 1.08, height: 31, width: 22, length: 10 },
   4: { name: "Pure Protein Concentrated / Isolated 1,8kg - Baunilha", price: 169.9, weight: 2.05, height: 38, width: 27, length: 13 },
   42: { name: "Pure Protein Concentrated / Isolated 1,8kg - Cookies", price: 169.9, weight: 2.05, height: 38, width: 27, length: 13 },
   43: { name: "Pure Protein Concentrated / Isolated 1,8kg - Chocolate", price: 169.9, weight: 2.05, height: 38, width: 27, length: 13 },
