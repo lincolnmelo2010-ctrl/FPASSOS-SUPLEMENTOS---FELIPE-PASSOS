@@ -1,7 +1,7 @@
 // FPassos Suplementos — arquivo ÚNICO de produção.
 // Regra: este é o único entrypoint ativo do Worker. Não criar v2/v3/v7 paralelos.
 // O frontend é lido do KV atual e recebe somente preços/status; imagens e visual não são substituídos.
-import api from './index_v3.js';
+import api from './backend.js';
 
 const RELEASE = 'production-prices-2026-08-20-01';
 
@@ -37,7 +37,6 @@ function patchFrontendIndex(html) {
     if (!out.includes(to) && out.includes(from)) out = out.replace(from,to);
   }
 
-  // Renderização dos dois Best Whey indisponíveis, sem preço e sem permitir adicionar.
   const oldCard='(0,f.jsx)("p",{children:l.detail}),(0,f.jsxs)("div",{className:"price-line",children:[(0,f.jsx)("small",{children:"POR APENAS"}),(0,f.jsx)("strong",{children:lt.format(l.price)}),(0,f.jsx)("span",{children:"ou em at\\xE9 12x no cart\\xE3o"})]}),(0,f.jsxs)("button",{className:`add-cart-button ${a?"added":""}`,onClick:t,children:[(0,f.jsx)("span",{children:a?"ADICIONADO":"ADICIONAR"}),(0,f.jsx)("b",{children:a?`\\u2713 ${a} NO CARRINHO`:"\\u{1F6D2}"})]})';
   const newCard='(0,f.jsx)("p",{children:l.detail}),l.unavailable?(0,f.jsx)("div",{className:"price-line unavailable",children:(0,f.jsx)("strong",{children:"INDISPON\\xCDVEL"})}):(0,f.jsxs)("div",{className:"price-line",children:[(0,f.jsx)("small",{children:"POR APENAS"}),(0,f.jsx)("strong",{children:lt.format(l.price)}),(0,f.jsx)("span",{children:"ou em at\\xE9 12x no cart\\xE3o"})]}),(0,f.jsxs)("button",{className:`add-cart-button ${a?"added":""} ${l.unavailable?"unavailable":""}`,onClick:l.unavailable?void 0:t,disabled:!!l.unavailable,children:[(0,f.jsx)("span",{children:l.unavailable?"INDISPON\\xCDVEL":a?"ADICIONADO":"ADICIONAR"}),(0,f.jsx)("b",{children:l.unavailable?"":a?`\\u2713 ${a} NO CARRINHO`:"\\u{1F6D2}"})]})';
   if (!out.includes('price-line unavailable') && out.includes(oldCard)) out=out.replace(oldCard,newCard);
