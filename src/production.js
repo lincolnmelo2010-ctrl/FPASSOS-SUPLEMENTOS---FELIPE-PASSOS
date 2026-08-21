@@ -4,6 +4,8 @@
 import api from './backend.js';
 
 const RELEASE = 'production-approved-cart-email-2026-08-20-02';
+const CEP_RELEASE = 'production-cep-autofill-2026-08-21-01';
+const CEP_MARKER = 'FPASSOS_CEP_AUTOFILL_V1';
 
 const PRODUCT_PATCHES = [
   ['detail:"Baunilha",price:149.99', 'detail:"Baunilha",price:119.9'],
@@ -78,10 +80,85 @@ function patchCheckout(js) {
     });
 }
 
+function patchCep(js) {
+  if (js.includes(CEP_MARKER)) return js;
+  return js + `
+/* ${CEP_MARKER} — consulta automática de endereço por CEP via ViaCEP. */
+(()=>{
+  'use strict';
+  let timer = 0;
+  let activeController = null;
+  let lastCep = '';
+  function digits(value){ return String(value || '').replace(/[^0-9]/g, ''); }
+  function status(input, message, kind){
+    const label = input?.closest('label');
+    if (!label) return;
+    let node = label.querySelector('.fp-cep-status');
+    if (!node) {
+      node = document.createElement('small');
+      node.className = 'fp-cep-status';
+      node.style.cssText = 'display:none;min-height:0;font-size:10px;line-height:1.2;letter-spacing:0;font-weight:700;color:#9ba3ae';
+      label.appendChild(node);
+    }
+    node.textContent = message || '';
+    node.style.display = message ? 'block' : 'none';
+    node.style.color = kind === 'error' ? '#ff7b7b' : (kind === 'ok' ? '#67dc91' : '#9ba3ae');
+  }
+  function field(form, name){ return form?.elements?.namedItem(name); }
+  async function lookup(input){
+    const cep = digits(input?.value);
+    const form = input?.form;
+    if (!form || cep.length !== 8 || cep === lastCep) return;
+    lastCep = cep;
+    if (activeController) activeController.abort();
+    activeController = new AbortController();
+    input.setCustomValidity('');
+    status(input, 'Consultando endereço…');
+    try {
+      const response = await fetch('https://viacep.com.br/ws/' + cep + '/json/', {headers:{'Accept':'application/json'}, signal: activeController.signal});
+      if (!response.ok) throw new Error('Não foi possível consultar este CEP.');
+      const data = await response.json();
+      if (data.erro) throw new Error('CEP não encontrado.');
+      const street = field(form, 'street');
+      const neighborhood = field(form, 'neighborhood');
+      const city = field(form, 'city');
+      const state = field(form, 'state');
+      if (street) street.value = data.logradouro || '';
+      if (neighborhood) neighborhood.value = data.bairro || '';
+      if (city) city.value = data.localidade || '';
+      if (state) state.value = data.uf || '';
+      input.setCustomValidity('');
+      status(input, 'Endereço preenchido automaticamente.', 'ok');
+      window.setTimeout(() => { if (digits(input.value) === cep) status(input, ''); }, 3500);
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+      input.setCustomValidity(error?.message || 'Confira o CEP.');
+      status(input, error?.message || 'Confira o CEP.', 'error');
+    }
+  }
+  document.addEventListener('input', event => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || !input.matches('.fp-customer-form input[name="zip"]')) return;
+    const cep = digits(input.value);
+    if (cep.length !== 8) { lastCep = ''; input.setCustomValidity(''); status(input, ''); }
+    window.clearTimeout(timer);
+    if (cep.length === 8) timer = window.setTimeout(() => lookup(input), 350);
+  }, true);
+  document.addEventListener('blur', event => {
+    const input = event.target;
+    if (input instanceof HTMLInputElement && input.matches('.fp-customer-form input[name="zip"]')) lookup(input);
+  }, true);
+})();
+`;
+}
+
 async function syncFrontend(env) {
   if (!env.FPASSOS_FRONTEND_CODE || !env.FPASSOS_STORE) return;
   const marker=`frontend:published:${RELEASE}`;
-  if (await env.FPASSOS_STORE.get(marker)) return;
+  const cepMarker=`frontend:published:${CEP_RELEASE}`;
+  const mainPending = !(await env.FPASSOS_STORE.get(marker));
+  const cepPending = !(await env.FPASSOS_STORE.get(cepMarker));
+  if (!mainPending && !cepPending) return;
 
   const [html,checkout]=await Promise.all([
     env.FPASSOS_FRONTEND_CODE.get('index.html'),
@@ -89,14 +166,16 @@ async function syncFrontend(env) {
   ]);
   if (!html || !checkout) throw new Error('Frontend atual não encontrado no KV.');
 
-  const nextHtml=patchFrontendIndex(html);
-  const nextCheckout=patchCheckout(checkout);
+  const nextHtml = mainPending ? patchFrontendIndex(html) : html;
+  let nextCheckout = mainPending ? patchCheckout(checkout) : checkout;
+  if (cepPending) nextCheckout = patchCep(nextCheckout);
 
   await Promise.all([
     nextHtml!==html ? env.FPASSOS_FRONTEND_CODE.put('index.html',nextHtml) : Promise.resolve(),
-    nextCheckout!==checkout ? env.FPASSOS_FRONTEND_CODE.put('fpassos-checkout.js',nextCheckout) : Promise.resolve()
+    nextCheckout!==checkout ? env.FPASSOS_FRONTEND_CODE.put('fpassos-checkout.js',nextCheckout) : Promise.resolve(),
+    mainPending ? env.FPASSOS_STORE.put(marker,new Date().toISOString()) : Promise.resolve(),
+    cepPending ? env.FPASSOS_STORE.put(cepMarker,new Date().toISOString()) : Promise.resolve()
   ]);
-  await env.FPASSOS_STORE.put(marker,new Date().toISOString());
 }
 
 export default {

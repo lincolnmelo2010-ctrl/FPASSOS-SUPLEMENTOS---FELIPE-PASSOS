@@ -7,7 +7,8 @@
   "secrets": {
     "required": [
       "MERCADO_PAGO_ACCESS_TOKEN",
-      "MELHOR_ENVIO_CLIENT_SECRET"
+      "MELHOR_ENVIO_CLIENT_SECRET",
+      "RESEND_API_KEY"
     ]
   },
   "vars": {

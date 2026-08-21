@@ -44,6 +44,75 @@ const PRODUCTS = {
 
 const digits = (value) => String(value || '').replace(/\D/g, '');
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+const ORDER_EMAIL_FROM = 'FPassos Suplementos <contato@fpassossuplementos.com.br>';
+const ORDER_EMAIL_TO = 'contato@fpassossuplementos.com.br';
+const ORDER_EMAIL_MARKER_TTL = 60 * 60 * 24 * 180;
+const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+function htmlEscape(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+}
+
+function customerAddressText(customer = {}) {
+  const line1 = [customer.street, customer.number].filter(Boolean).join(', ');
+  const line2 = [customer.complement, customer.neighborhood].filter(Boolean).join(' • ');
+  const line3 = [customer.city, customer.state].filter(Boolean).join(' / ');
+  return [line1, line2, line3, customer.zip ? `CEP ${digits(customer.zip)}` : ''].filter(Boolean).join('\n');
+}
+
+function customerAddressHtml(customer = {}) {
+  return htmlEscape(customerAddressText(customer)).replace(/\n/g, '<br>');
+}
+
+function orderItemsText(cart = []) {
+  return cart.length ? cart.map((item) => `${item.quantity} x ${item.name} — ${brl.format(Number(item.unit_price) * Number(item.quantity))}`).join('\n') : 'Itens não disponíveis no registro do pedido.';
+}
+
+function orderItemsHtml(cart = []) {
+  return cart.length ? `<ul>${cart.map((item) => `<li>${htmlEscape(item.quantity)} x ${htmlEscape(item.name)} — <strong>${htmlEscape(brl.format(Number(item.unit_price) * Number(item.quantity)))}</strong></li>`).join('')}</ul>` : '<p>Itens não disponíveis no registro do pedido.</p>';
+}
+
+async function sendApprovedOrderEmail(env, order) {
+  if (!env.RESEND_API_KEY) return { sent: false, reason: 'RESEND_API_KEY ausente' };
+  const customer = order.customer || {};
+  const reference = order.order_reference || `FP-${order.payment_id || 'SEM-REFERENCIA'}`;
+  const customerName = customer.name || 'Cliente não informado';
+  const shippingName = [order.shipping?.company, order.shipping?.name].filter(Boolean).join(' • ') || 'Frete não informado';
+  const subject = `[${reference}] Pedido aprovado — ${customerName}`;
+  const text = [
+    'NOVO PEDIDO APROVADO — FPASSOS SUPLEMENTOS',
+    `Referência: ${reference}`,
+    `Pagamento Mercado Pago: ${order.payment_id || 'não informado'}`,
+    `Status: ${order.status || 'approved'}`,
+    '',
+    'DADOS DO CLIENTE',
+    `Nome: ${customer.name || ''}`,
+    `CPF: ${customer.cpf || ''}`,
+    `E-mail: ${customer.email || ''}`,
+    `Telefone: ${customer.phone || ''}`,
+    `Endereço:\n${customerAddressText(customer) || 'não informado'}`,
+    '',
+    'PRODUTOS',
+    orderItemsText(order.cart),
+    '',
+    `Subtotal: ${brl.format(Number(order.subtotal || 0))}`,
+    `Frete: ${shippingName} — ${brl.format(Number(order.shipping?.price || 0))}`,
+    `TOTAL APROVADO: ${brl.format(Number(order.total || 0))}`
+  ].join('\n');
+  const html = `<div style="font-family:Arial,sans-serif;color:#171717;line-height:1.5"><h2 style="color:#111">Novo pedido aprovado — FPassos Suplementos</h2><p><strong>Referência:</strong> ${htmlEscape(reference)}<br><strong>Pagamento Mercado Pago:</strong> ${htmlEscape(order.payment_id || 'não informado')}<br><strong>Status:</strong> ${htmlEscape(order.status || 'approved')}</p><hr><h3>Dados do cliente</h3><p><strong>Nome:</strong> ${htmlEscape(customer.name || '')}<br><strong>CPF:</strong> ${htmlEscape(customer.cpf || '')}<br><strong>E-mail:</strong> ${htmlEscape(customer.email || '')}<br><strong>Telefone:</strong> ${htmlEscape(customer.phone || '')}<br><strong>Endereço:</strong><br>${customerAddressHtml(customer) || 'não informado'}</p><h3>Produtos</h3>${orderItemsHtml(order.cart)}<p><strong>Subtotal:</strong> ${htmlEscape(brl.format(Number(order.subtotal || 0)))}<br><strong>Frete:</strong> ${htmlEscape(shippingName)} — ${htmlEscape(brl.format(Number(order.shipping?.price || 0)))}<br><strong>Total aprovado:</strong> ${htmlEscape(brl.format(Number(order.total || 0)))}</p></div>`;
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+      'Idempotency-Key': `fpassos-order-email-${String(order.payment_id || reference)}`
+    },
+    body: JSON.stringify({ from: ORDER_EMAIL_FROM, to: [ORDER_EMAIL_TO], subject, text, html })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(`Resend HTTP ${response.status}: ${data.message || data.name || 'falha ao enviar e-mail'}`);
+  return { sent: true, id: data.id || null };
+}
 
 function allowedOrigins(env) {
   const configured = String(env.FRONTEND_ORIGINS || 'https://fpassossuplementos.com.br')
@@ -190,9 +259,47 @@ async function processPayment(request, env) {
 async function hmacHex(secret, message) { const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']); const sig=await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(message)); return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
 async function validMpWebhook(request, env, dataId) { if(!env.MERCADO_PAGO_WEBHOOK_SECRET)return true; const xs=request.headers.get('x-signature')||'',rid=request.headers.get('x-request-id')||''; const parts=Object.fromEntries(xs.split(',').map(x=>x.trim().split('='))); if(!parts.ts||!parts.v1||!rid||!dataId)return false; const template=`id:${String(dataId).toLowerCase()};request-id:${rid};ts:${parts.ts};`; return (await hmacHex(env.MERCADO_PAGO_WEBHOOK_SECRET,template))===parts.v1; }
 async function mpWebhook(request, env) {
-  try { const url=new URL(request.url); let dataId=url.searchParams.get('data.id')||url.searchParams.get('id'); if(!dataId && request.method==='POST'){try{const b=await request.clone().json();dataId=b?.data?.id||b?.id}catch{}} if(!dataId)return new Response('ok'); if(!(await validMpWebhook(request,env,dataId)))return new Response('invalid signature',{status:401}); if(!env.MERCADO_PAGO_ACCESS_TOKEN)return new Response('missing token',{status:503});
-    const r=await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(dataId)}`,{headers:{Authorization:`Bearer ${env.MERCADO_PAGO_ACCESS_TOKEN}`,Accept:'application/json'}}); if(!r.ok)return new Response('ok'); const p=await r.json(), key=`order:${p.id}`, old=JSON.parse(await storeRequired(env).get(key)||'{}'); await storeRequired(env).put(key,JSON.stringify({...old,status:p.status,status_detail:p.status_detail,updated_at:new Date().toISOString()}),{expirationTtl:60*60*24*180}); return new Response('ok');
-  } catch { return new Response('ok'); }
+  try {
+    const url = new URL(request.url);
+    let dataId = url.searchParams.get('data.id') || url.searchParams.get('id');
+    if (!dataId && request.method === 'POST') {
+      try { const body = await request.clone().json(); dataId = body?.data?.id || body?.id; } catch {}
+    }
+    if (!dataId) return new Response('ok');
+    if (!(await validMpWebhook(request, env, dataId))) return new Response('invalid signature', { status: 401 });
+    if (!env.MERCADO_PAGO_ACCESS_TOKEN) return new Response('missing token', { status: 503 });
+
+    const response = await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(dataId)}`, { headers: { Authorization: `Bearer ${env.MERCADO_PAGO_ACCESS_TOKEN}`, Accept: 'application/json' } });
+    if (!response.ok) return new Response('ok');
+    const payment = await response.json();
+    const store = storeRequired(env);
+    const key = `order:${payment.id}`;
+    const old = JSON.parse(await store.get(key) || '{}');
+    const updated = { ...old, status: payment.status, status_detail: payment.status_detail, updated_at: new Date().toISOString() };
+    await store.put(key, JSON.stringify(updated), { expirationTtl: ORDER_EMAIL_MARKER_TTL });
+
+    if (payment.status === 'approved' && updated.order_reference && updated.customer) {
+      const notificationKey = `order-notification:${payment.id}:email`;
+      const alreadySent = await store.get(notificationKey);
+      if (!alreadySent) {
+        try {
+          const result = await sendApprovedOrderEmail(env, { ...updated, payment_id: String(payment.id) });
+          if (result.sent) {
+            await store.put(notificationKey, JSON.stringify({ sent_at: new Date().toISOString(), resend_id: result.id || null }), { expirationTtl: ORDER_EMAIL_MARKER_TTL });
+            await store.put(key, JSON.stringify({ ...updated, email_notification: 'sent', email_notification_at: new Date().toISOString() }), { expirationTtl: ORDER_EMAIL_MARKER_TTL });
+          } else {
+            console.error('Aviso de pedido aprovado não enviado:', result.reason);
+          }
+        } catch (error) {
+          console.error('Falha no aviso de pedido aprovado por e-mail:', error?.message || error);
+        }
+      }
+    }
+    return new Response('ok');
+  } catch (error) {
+    console.error('Falha no webhook Mercado Pago:', error?.message || error);
+    return new Response('ok');
+  }
 }
 async function health(env) {
   let melhorEnvio = false;
