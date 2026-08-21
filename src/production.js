@@ -1,9 +1,9 @@
 // FPassos Suplementos — arquivo ÚNICO de produção.
 // Regra: este é o único entrypoint ativo do Worker. Não criar v2/v3/v7 paralelos.
-// O frontend é lido do KV atual e recebe somente preços/status; imagens e visual não são substituídos.
+// O frontend é lido do KV atual e recebe somente alterações pontuais aprovadas; imagens e estrutura visual não são substituídas.
 import api from './backend.js';
 
-const RELEASE = 'production-prices-2026-08-20-01';
+const RELEASE = 'production-approved-cart-email-2026-08-20-02';
 
 const PRODUCT_PATCHES = [
   ['detail:"Baunilha",price:149.99', 'detail:"Baunilha",price:119.9'],
@@ -52,6 +52,19 @@ function patchFrontendIndex(html) {
   const oldAdd='r=b=>c(A=>({...A,[b]:(A[b]??0)+1}))';
   const newAdd='r=b=>{let A=Pa.products.find(O=>O.id===b);A&&!A.unavailable&&c(O=>({...O,[b]:(O[b]??0)+1}))}';
   if (!out.includes(newAdd) && out.includes(oldAdd)) out=out.replace(oldAdd,newAdd);
+
+  // Alteração aprovada: carrinho amarelo quando houver itens e contador maior em círculo azul.
+  const oldCartCss='.header-cart{color:#050505;background:#fff;border-radius:999px;align-items:center;gap:8px;min-height:48px;padding:5px 16px 5px 12px;display:flex;position:relative}';
+  const newCartCss='.header-cart{color:#050505;background:#fff;border-radius:999px;align-items:center;gap:8px;min-height:48px;padding:5px 16px 5px 12px;display:flex;position:relative;transition:background .18s,box-shadow .18s}.header-cart.has-items{background:var(--gold);box-shadow:0 0 0 2px #ffc40045,0 0 22px #ffc40038}.header-cart.has-items i{background:var(--blue);color:#fff;min-width:30px;height:30px;padding:0 7px;font-size:16px;line-height:1;top:-9px;right:-7px;box-shadow:0 0 0 3px #050607,0 4px 12px #0008}';
+  if (!out.includes('.header-cart.has-items{') && out.includes(oldCartCss)) out=out.replace(oldCartCss,newCartCss);
+
+  const oldCartButton='className:"header-cart",onClick:()=>m(!0)';
+  const newCartButton='className:`header-cart ${s>0?"has-items":""}`,onClick:()=>m(!0)';
+  if (!out.includes('className:`header-cart ${s>0?"has-items":""}`') && out.includes(oldCartButton)) out=out.replace(oldCartButton,newCartButton);
+
+  // Alteração aprovada: e-mail público oficial do rodapé.
+  out=out.replaceAll('mailto:felipefpassos@hotmail.com','mailto:contato@fpassossuplementos.com.br');
+  out=out.replaceAll('E-mail: felipefpassos@hotmail.com','E-mail: contato@fpassossuplementos.com.br');
   return out;
 }
 
@@ -88,7 +101,7 @@ async function syncFrontend(env) {
 
 export default {
   async fetch(request,env,ctx){
-    try { await syncFrontend(env); } catch (error) { console.error('Falha ao sincronizar preços/status:',error); }
+    try { await syncFrontend(env); } catch (error) { console.error('Falha ao sincronizar frontend aprovado:',error); }
     return api.fetch(request,env,ctx);
   }
 };
