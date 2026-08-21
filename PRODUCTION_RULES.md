@@ -10,3 +10,4 @@
 8. Alterações de imagem devem preservar `index.html`, JavaScript, CSS, carrinho, e-mail, frete e pagamento, salvo pedido explícito.
 9. Os produtos Best Whey Toddy 900g e Best Whey 900g Original devem permanecer visíveis, sem preço e marcados como `INDISPONÍVEL` enquanto esse status não for alterado explicitamente.
 10. O e-mail público do rodapé é `contato@fpassossuplementos.com.br`; o e-mail técnico configurado para integrações não deve ser trocado automaticamente.
+11. Com pelo menos um produto no carrinho, o botão `CARRINHO` deve ficar amarelo e o contador deve aparecer maior, em círculo azul com número branco. Esta é a apresentação visual aprovada e não deve ser removida sem pedido explícito.
